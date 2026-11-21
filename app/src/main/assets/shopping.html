@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#f4f1ea"><title>Shared shopping lists · Portal</title><link rel="stylesheet" href="/shopping.css"><script src="/shopping.js" defer></script></head>
+<body><main><header><div class="brand">Portal · Together at home</div><h1>Shared shopping lists</h1><p>Add it here. See it on your display.</p><div id="status" role="status">Connecting to your Portal…</div></header>
+<p id="error" role="alert" hidden></p>
+<section id="app" hidden><label for="lists">Your lists</label><select id="lists"></select>
+<form id="add-item"><label class="sr-only" for="item">Add an item</label><div class="input-row"><input id="item" maxlength="240" autocomplete="off" placeholder="Add an item, e.g. milk" required><button type="submit">Add</button></div></form>
+<section class="card"><div class="card-heading"><h2 id="title">Shopping</h2><span id="count"></span></div><div id="items"></div></section>
+<details><summary>Create another list</summary><form id="add-list"><label for="name">List name</label><div class="input-row"><input id="name" maxlength="80" autocomplete="off" placeholder="e.g. Weekend groceries" required><button type="submit">Create</button></div></form></details></section>
+<footer>Shared with your Portal and linked phones.<br>Use on your home Wi-Fi. Updates appear automatically.<br>Bookmark this page to return to your lists.</footer></main></body></html>

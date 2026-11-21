@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- mDNS (NsdManager) so spoke Portals can auto-find the hub on the LAN. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- Wakes the device out of the screensaver dream for the idle takeover. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Optional, adb-granted: lets the takeover guard notice when the stock
+         photo frame has stolen the screen and take it back. -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Optional: tap-to-talk voice commands (audio transcribed by the user's Gemini key). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+
+    <application
+        android:name=".App"
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:icon="@drawable/ic_launcher"
+        android:usesCleartextTraffic="true"
+        android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".RadioActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode" />
+
+        <activity android:name=".WeatherActivity" android:exported="false"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode" />
+        <activity android:name=".CameraActivity" android:exported="false"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode" />
+
+        <service
+            android:name=".KeepAliveService"
+            android:exported="false" />
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

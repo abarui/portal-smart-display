@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Family calendar",
+    "url": "https://calendar.google.com/calendar/ical/EXAMPLE/private-REPLACE_ME/basic.ics",
+    "color": "#70A5FF",
+    "kind": "calendar",
+    "text": "auto"
+  }
+]

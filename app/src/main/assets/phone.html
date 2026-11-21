@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f4f1ea">
+  <title>Connect a calendar · Portal</title>
+  <link rel="stylesheet" href="/phone.css">
+  <script src="/phone.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="7" width="22" height="21" rx="5"/><path d="M10 4v6M22 4v6M5 14h22M11 20h3M18 20h3"/></svg><span>Portal</span></div>
+      <h1>Connect a calendar</h1>
+      <p class="intro">Your plans on your phone.<br>Your day on the display.</p>
+      <p id="connection" class="connection" role="status">Connecting to your Portal…</p>
+    </header>
+
+    <div id="sessionError" class="notice" role="alert" hidden></div>
+
+    <section id="success" class="success" hidden aria-live="polite">
+      <div class="check" aria-hidden="true">✓</div>
+      <h2>Calendar connected</h2>
+      <p><strong id="connectedName"></strong> is now on your Portal.</p>
+      <p class="muted">Keep adding and editing events on your phone. The display checks for updates about every 15 minutes.</p>
+      <button id="another" type="button" class="primary">Add another calendar</button>
+      <p class="small">Tap Done on the Portal when you’ve finished.</p>
+    </section>
+
+    <form id="connectForm" hidden>
+      <fieldset id="formFields">
+        <legend class="sr-only">Calendar connection</legend>
+        <section class="provider-section" aria-labelledby="providerHeading">
+          <h2 id="providerHeading">Which calendar do you use?</h2>
+          <div class="providers" role="group" aria-label="Calendar provider">
+            <button type="button" data-provider="icloud" aria-pressed="true">iCloud</button>
+            <button type="button" data-provider="google" aria-pressed="false">Google</button>
+            <button type="button" data-provider="outlook" aria-pressed="false">Outlook</button>
+          </div>
+        </section>
+
+        <section class="instructions" aria-labelledby="stepsHeading">
+          <h2 id="stepsHeading">Get the link on your iPhone</h2>
+          <ol id="steps"></ol>
+          <p id="providerNote" class="provider-note"></p>
+        </section>
+
+        <section class="details" aria-labelledby="detailsHeading">
+          <h2 id="detailsHeading">Add it to your display</h2>
+          <label for="name">Calendar name</label>
+          <input id="name" name="name" type="text" maxlength="80" value="My iCloud calendar" autocomplete="off" required>
+          <label for="url">Calendar subscription link</label>
+          <input id="url" name="url" type="url" maxlength="4096" placeholder="Paste webcal:// or https:// link" autocomplete="off" autocapitalize="off" spellcheck="false" required aria-describedby="pasteHint">
+          <p id="pasteHint" class="small">Touch and hold the field, then tap Paste.</p>
+          <label class="consent"><input id="sharing" type="checkbox" required><span id="sharingText"></span></label>
+          <p id="formError" class="error" role="alert" hidden></p>
+          <button id="submit" type="submit" class="primary">Connect calendar</button>
+          <p class="small bottom-note">Only the calendar you choose will be added. No Apple password is needed.</p>
+        </section>
+      </fieldset>
+    </form>
+    <footer>Connected calendars stay on the Portal.<br>Keep your phone and display on the same Wi-Fi during setup.</footer>
+  </main>
+</body>
+</html>

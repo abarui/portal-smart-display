@@ -1,0 +1,288 @@
+package com.portal.calendar
+
+import android.content.Context
+import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
+import biweekly.Biweekly
+import biweekly.component.VEvent
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
+import java.security.MessageDigest
+import java.util.Date
+import java.util.TimeZone
+import java.util.concurrent.Executors
+import kotlin.math.max
+
+data class EventInstance(
+    val start: Long,
+    val end: Long,
+    val allDay: Boolean,
+    val title: String,
+    val location: String?,
+    val feedName: String,
+    val color: Int,
+    /** Source iCal UID — the handle used to delete-with-sync (empty if absent). */
+    val uid: String = "",
+    /** True for any occurrence of a repeating series (deleting removes all). */
+    val recurring: Boolean = false,
+    /** Text color for anywhere [color] is a solid fill behind this event's text. */
+    val textColor: Int = Color.WHITE
+)
+
+/**
+ * Fetches each configured ICS feed, caches the raw text on disk (so the board
+ * still shows events after a reboot with no network), parses with biweekly and
+ * expands recurrences into concrete instances inside a rolling window.
+ */
+class SyncManager(private val ctx: Context, private val store: ConfigStore) {
+    private val executor = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+
+    fun requestSync(onDone: (events: List<EventInstance>, problems: List<String>) -> Unit) {
+        executor.execute {
+            val feeds = store.feeds()
+            val all = ArrayList<EventInstance>()
+            val problems = ArrayList<String>()
+            // CalDAV servers that didn't answer at all during this pass (connect/timeout, not an
+            // HTTP error). Feeds run one after another, so without this a dead server would cost
+            // a full connect timeout per calendar and stall the whole refresh.
+            val unreachable = HashSet<String>()
+            for (feed in feeds) {
+                val text = fetchWithCache(feed, problems, unreachable) ?: continue
+                try {
+                    if (feed.kind == "inbox") processInbox(text)
+                    else all.addAll(parseFeed(text, feed))
+                } catch (e: Exception) {
+                    problems.add("${feed.name}: unreadable feed (${e.javaClass.simpleName})")
+                }
+            }
+            all.sortBy { it.start }
+            main.post { onDone(all, problems) }
+        }
+    }
+
+    /** Network first; on failure falls back to the last good copy on disk. */
+    private fun fetchWithCache(feed: FeedConfig, problems: MutableList<String>,
+                               unreachable: MutableSet<String>): String? {
+        val cache = File(ctx.filesDir, "feed_" + md5(feed.url) + ".ics")
+        val origin = if (feed.source == "caldav") CalDavXml.originOf(feed.url) else null
+        try {
+            if (origin != null && origin in unreachable)   // already timed out on this server: straight to the cache
+                throw CalDavUnreachable(CalDavXml.hostOf(feed.url), "couldn't reach ${CalDavXml.hostOf(feed.url)}")
+            val text = if (feed.source == "caldav") CalDav.fetchIcs(ctx, feed.url) else fetchIcsText(feed.url)
+            if (!text.contains("BEGIN:VCALENDAR"))
+                throw RuntimeException("not an iCal feed")
+            // Atomic: a crash mid-write must not corrupt the offline copy.
+            val tmp = File(cache.path + ".tmp")
+            tmp.writeText(text)
+            tmp.renameTo(cache)
+            return text
+        } catch (e: Exception) {
+            if (e is CalDavUnreachable && origin != null) unreachable.add(origin)
+            // CalDAV errors are already readable ("CalDAV account not connected", "sign-in
+            // failed…"), so say what happened instead of a bare "offline".
+            val reason = if (feed.source == "caldav" && e is IllegalArgumentException) e.message else null
+            return if (cache.exists()) {
+                problems.add("${feed.name}: " +
+                    (if (reason != null) "$reason (showing cached copy)" else "offline, showing cached copy"))
+                cache.readText()
+            } else {
+                problems.add("${feed.name}: " +
+                    (reason ?: "fetch failed (${e.message ?: e.javaClass.simpleName})"))
+                null
+            }
+        }
+    }
+
+    /** GETs a published iCal/webcal link (no auth). */
+    private fun fetchIcsText(feedUrl: String): String {
+        val url = if (feedUrl.startsWith("webcal://"))
+            "https://" + feedUrl.removePrefix("webcal://") else feedUrl
+        val conn = URL(url).openConnection() as HttpURLConnection
+        conn.connectTimeout = 10_000
+        conn.readTimeout = 20_000
+        conn.instanceFollowRedirects = true
+        conn.setRequestProperty("User-Agent", "PortalFamilyCalendar/1.0")
+        try {
+            if (conn.responseCode !in 200..299)
+                throw RuntimeException("HTTP ${conn.responseCode}")
+            return conn.inputStream.bufferedReader().readText()
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    private fun parseFeed(text: String, feed: FeedConfig): List<EventInstance> {
+        val out = ArrayList<EventInstance>()
+        val tz = TimeZone.getDefault()
+        val now = System.currentTimeMillis()
+        val windowStart = now - WINDOW_PAST_DAYS * DAY_MS
+        val windowEnd = now + WINDOW_FUTURE_DAYS * DAY_MS
+        // UIDs the user deleted from the board — keep them hidden until the
+        // source feed catches up (Google's secret iCal can lag hours).
+        val suppressed = DeletedEvents.activeUids(ctx)
+        val textColor = feed.textColor
+
+        for (ical in Biweekly.parse(text).all()) {
+            // Instances of a recurring series that were individually edited carry a
+            // RECURRENCE-ID; the master series must skip those occurrences.
+            val overridden = HashMap<String, MutableSet<Long>>()
+            for (e in ical.events) {
+                val rid = e.recurrenceId ?: continue
+                val uid = e.uid?.value ?: continue
+                overridden.getOrPut(uid) { HashSet() }.add(rid.value.time)
+            }
+
+            for (e in ical.events) {
+                if (e.status?.value?.equals("CANCELLED", true) == true) continue
+                val ds = e.dateStart ?: continue
+
+                val evUid = e.uid?.value ?: ""
+                if (evUid.isNotEmpty() && evUid in suppressed) continue // deleted from the board
+
+                // Magic-word events route to lists/chores and never render.
+                val magic = MagicWords.match(e.summary?.value ?: "")
+                if (magic != null) {
+                    val uid = e.uid?.value ?: (feed.url + (e.summary?.value ?: ""))
+                    // Mark AFTER a successful execute so a failed command
+                    // retries next sync instead of being consumed silently.
+                    if (!MagicWords.isProcessed(ctx, uid)) {
+                        runCatching { MagicWords.execute(ctx, magic, ds.value.time) }
+                            .onSuccess { MagicWords.markProcessed(ctx, uid) }
+                    }
+                    continue
+                }
+
+                val allDay = !ds.value.hasTime()
+                val durMs = durationMs(e, allDay)
+                val title = e.summary?.value?.trim().takeUnless { it.isNullOrEmpty() } ?: "(untitled)"
+                val loc = e.location?.value?.trim().takeUnless { it.isNullOrEmpty() }
+
+                if (e.recurrenceId != null) {
+                    // Edited single instance: add as-is (part of a series).
+                    val s = ds.value.time
+                    if (s + durMs >= windowStart && s <= windowEnd)
+                        out.add(EventInstance(s, s + durMs, allDay, title, loc, feed.name, feed.color, evUid, true, textColor))
+                    continue
+                }
+
+                val recurring = e.recurrenceRule != null || e.recurrenceDates.isNotEmpty()
+                if (!recurring) {
+                    val s = ds.value.time
+                    if (s + durMs >= windowStart && s <= windowEnd)
+                        out.add(EventInstance(s, s + durMs, allDay, title, loc, feed.name, feed.color, evUid, false, textColor))
+                } else {
+                    val skips = e.uid?.value?.let { overridden[it] }
+                    // Honors RRULE + RDATE + EXDATE. Expand in the EVENT's own
+                    // timezone — using the device zone shifts a foreign-TZID
+                    // feed's occurrences (sometimes a whole day) and breaks
+                    // EXDATE/RECURRENCE-ID matching across DST mismatches.
+                    val etz = ical.timezoneInfo.getTimezone(ds)?.timeZone ?: tz
+                    val it2 = e.getDateIterator(etz)
+                    it2.advanceTo(Date(windowStart - max(durMs, DAY_MS)))
+                    var guard = 0
+                    while (it2.hasNext() && guard < 2000) {
+                        guard++
+                        val occ = it2.next()
+                        if (occ.time > windowEnd) break
+                        if (occ.time + durMs < windowStart) continue
+                        if (skips?.contains(occ.time) == true) continue
+                        out.add(EventInstance(occ.time, occ.time + durMs, allDay, title, loc, feed.name, feed.color, evUid, true, textColor))
+                    }
+                }
+            }
+        }
+        return out
+    }
+
+    /**
+     * Test-fetches a feed URL (called from the config page when adding a
+     * calendar, on the HTTP worker thread). Returns the event count; throws
+     * IllegalArgumentException with a readable message if anything is wrong.
+     * [source] "caldav" reads the calendar through the connected CalDAV account
+     * ([rawUrl] is its collection address) instead of fetching a published link.
+     */
+    fun validateFeed(rawUrl: String, source: String = "ics"): Int {
+        if (source == "caldav") {
+            val text = try {
+                CalDav.fetchIcs(ctx, rawUrl)
+            } catch (e: IllegalArgumentException) {
+                throw e
+            } catch (e: Exception) {
+                throw IllegalArgumentException("couldn't read that calendar (${e.message ?: e.javaClass.simpleName})")
+            }
+            return Biweekly.parse(text).all().sumOf { it.events.size }
+        }
+        val url = if (rawUrl.startsWith("webcal://"))
+            "https://" + rawUrl.removePrefix("webcal://") else rawUrl
+        try {
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 20_000
+            conn.instanceFollowRedirects = true
+            conn.setRequestProperty("User-Agent", "PortalFamilyCalendar/1.0")
+            try {
+                if (conn.responseCode !in 200..299)
+                    throw IllegalArgumentException(
+                        "the server said HTTP ${conn.responseCode} — check the link is the iCal/secret address")
+                val text = conn.inputStream.bufferedReader().readText()
+                if (!text.contains("BEGIN:VCALENDAR"))
+                    throw IllegalArgumentException(
+                        "that link isn't a calendar feed — it should end in .ics or start with webcal://")
+                return Biweekly.parse(text).all().sumOf { it.events.size }
+            } finally {
+                conn.disconnect()
+            }
+        } catch (e: IllegalArgumentException) {
+            throw e
+        } catch (e: Exception) {
+            throw IllegalArgumentException("couldn't reach that link (${e.message ?: e.javaClass.simpleName})")
+        }
+    }
+
+    /** Inbox calendars: every event is a command, parsed loosely, never rendered. */
+    private fun processInbox(text: String) {
+        for (ical in Biweekly.parse(text).all()) {
+            for (e in ical.events) {
+                if (e.status?.value?.equals("CANCELLED", true) == true) continue
+                val title = e.summary?.value?.trim().orEmpty()
+                if (title.isEmpty()) continue
+                val uid = e.uid?.value ?: title
+                if (MagicWords.isProcessed(ctx, uid)) continue
+                // Mark only after success — a failed command retries next sync.
+                runCatching {
+                    MagicWords.execute(ctx, MagicWords.parseSmart(ctx, title),
+                        e.dateStart?.value?.time ?: System.currentTimeMillis())
+                }.onSuccess { MagicWords.markProcessed(ctx, uid) }
+            }
+        }
+    }
+
+    private fun durationMs(e: VEvent, allDay: Boolean): Long {
+        val start = e.dateStart?.value?.time ?: return 0
+        e.dateEnd?.value?.time?.let { return max(0, it - start) }
+        e.duration?.value?.let { return it.toMillis() }
+        if (allDay) {
+            // One CALENDAR day, not a fixed 24h — a fixed span spills onto the
+            // next day across DST and double-renders the event.
+            val c = java.util.Calendar.getInstance()
+            c.timeInMillis = start
+            c.add(java.util.Calendar.DAY_OF_MONTH, 1)
+            return c.timeInMillis - start
+        }
+        return 0
+    }
+
+    private fun md5(s: String): String =
+        MessageDigest.getInstance("MD5").digest(s.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+
+    companion object {
+        const val DAY_MS = 86_400_000L
+        /** Events are expanded from this many days back to this many days ahead (CalDAV fetches the same span). */
+        const val WINDOW_PAST_DAYS = 35L
+        const val WINDOW_FUTURE_DAYS = 180L
+    }
+}
