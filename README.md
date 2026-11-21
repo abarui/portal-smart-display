@@ -21,7 +21,7 @@ No personal calendar feeds, account sessions, photos, device identifiers or sign
 ## Start here
 
 1. Read [compatibility and installation](docs/INSTALL.md).
-2. Download the project's signed APK from [Releases](https://github.com/abarui/portal-smart-display/releases), when available, or [build it yourself](docs/BUILD.md).
+2. Download the project's signed APK from [Releases](https://github.com/abarui/portal-smart-display/releases), or [build it yourself](docs/BUILD.md).
 3. Connect your own [calendars and phone](docs/CALENDARS.md).
 4. Set up [radio, music, Frame and other apps](docs/APPS.md).
 5. Keep a private [configuration backup](docs/BACKUP-RESTORE.md).
