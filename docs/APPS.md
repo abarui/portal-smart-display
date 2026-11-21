@@ -20,7 +20,16 @@ adb -s YOUR_SERIAL push examples/radio/collection.json /sdcard/Android/data/org.
 
 This replaces that collection file. If you have existing stations, export them in Transistor first or add stations individually instead. Reopen Transistor, then open Radio on the dashboard. Select **Bengali** to filter stations, use the star to add favorites, and adjust the media-volume slider. AIR Bangla is the initial suggested favorite when available.
 
-## Photos while idle: Frame
+## Photos while idle: Frame Resume (new in v3.14.0)
+
+**[Frame Resume](FRAME-RESUME.md)** is the new companion photo app included in this project's releases. It remembers the last successfully displayed photo and preserves its shuffle queue after reopening or restarting. Follow its guide to install, reconnect shared albums, use its own phone-upload QR page, select it for idle photos and switch back to original Frame if desired.
+
+The package is `com.portalhacks.frame.resume`. Original Frame can stay installed; photos uploaded directly to it remain there and need reuploading into Frame Resume. Video playback remains unsupported in both.
+
+## Original Frame (optional alternative)
+
+Use these commands only when choosing original Frame. Its guard competes with Frame Resume's guard; disable the new app's guard first using the [switching instructions](FRAME-RESUME.md#switch-screensavers).
+
 
 Install **[Frame](https://github.com/Ishtiaqhossain/portal-frame/releases)** separately; 1.2.0 was tested. Open Frame and add your own Google Photos/iCloud shared-album links, or scan its photo-upload QR code from a phone on the same Wi-Fi. Media stays managed by Frame, not this dashboard.
 
@@ -36,7 +45,7 @@ adb -s YOUR_SERIAL shell settings put secure screensaver_activate_on_sleep 1
 
 First record the original settings if you want to undo them later. In dashboard Settings, choose the idle behavior that yields to the screensaver after about two minutes. A 15-second Android screen timeout was used on the tested setup. Avoid simultaneously enabling other launchers' competing screensaver guards.
 
-Frame 1.2.0 is **photo-only**. It skips videos or shows still thumbnails in Google Photos albums. This project does not add video playback to Frame. PicDock, Fotoo and local-video players are possible alternatives, but have not been validated on this Portal configuration.
+Frame 1.2.0 is **photo-only**. It skips videos or shows still thumbnails in Google Photos albums. Frame Resume also does not add video playback. PicDock, Fotoo and local-video players are possible alternatives, but have not been validated on this Portal configuration.
 
 ## Shared shopping lists
 

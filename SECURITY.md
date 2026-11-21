@@ -12,6 +12,12 @@ This is a community application for older Portal hardware. It has not had an ind
 
 The QR subscription interface restricts providers and URL shapes. This is not a complete guarantee against every possible redirect/provider/network attack; the more powerful local management API is intended only for trusted operators. A dashboard editing PIN protects UI actions, not all backend or Android-level access.
 
+## Frame Resume companion
+
+Frame Resume keeps its album settings, uploads and photo-position fingerprints in its own private app storage. Its upload QR contains a bearer token for the separate on-device HTTP upload service; use a trusted LAN and keep the QR/link private. It follows the upstream HTTPS-only outbound photo/album rules. The exported configuration receiver supports ADB setup but can also receive explicit broadcasts from installed apps, so treat other software on the Portal as trusted. See the companion's [security notes](apps/frame-resume/SECURITY.md).
+
+Its public installer contains upstream demo assets but no personal photos or album links. The backup helper at the repository root does not export its private photos/bookmark queue. Signed releases never include private signing keys.
+
 ## Reporting a vulnerability
 
 Use GitHub's **private vulnerability reporting** control if it is available on this repository. If not, open an issue asking for a private reporting channel without including exploit details or personal data. Do not post calendar URLs, photo/album links, exports, auth tokens, private images, credentials or signing keys in issues or discussions. Use synthetic data for reproductions.

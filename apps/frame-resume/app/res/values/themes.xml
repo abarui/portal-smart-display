@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Slideshow window theme. We KEEP the framework's starting window (windowDisablePreview
+      defaults to false): with a solid-black windowBackground it paints black over the home
+      screen during the dream->Activity hand-off, so the launcher no longer flashes through the
+      ~300ms launch gap. The reason it was once disabled — a warm start flashing the cached TASK
+      SNAPSHOT (the previous run's photo) — is avoided by launching the slideshow in a fresh task
+      (FLAG_ACTIVITY_CLEAR_TASK in FrameDreamService), so there's no retained snapshot to show.
+    -->
+    <style name="Theme.Frame" parent="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
+    <!--
+      Setup/settings window theme. NOT fullscreen, so Portal's system top bar
+      (back / home, Wi-Fi / status) floats over the screen just like it does for
+      the built-in apps — that overlay's back button replaces our old "Done"
+      button. The content reserves ~72dp at the top so nothing tucks under it.
+    -->
+    <style name="Theme.FrameSetup" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>

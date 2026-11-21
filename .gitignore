@@ -21,3 +21,5 @@ keystore.properties
 .env.*
 !*.example
 **/__pycache__/
+
+**/.kotlin/

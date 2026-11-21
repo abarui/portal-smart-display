@@ -1,0 +1,15 @@
+{
+  "albums": [
+    {
+      "url": "https://photos.app.goo.gl/YOUR_ALBUM_LINK",
+      "enabled": true
+    }
+  ],
+  "broadcast_booleans": {
+    "shuffle": true,
+    "clock": true,
+    "clock_low_light": true
+  },
+  "delay_ms": 6000,
+  "fade_ms": 500
+}

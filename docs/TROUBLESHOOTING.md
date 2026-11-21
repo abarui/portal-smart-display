@@ -12,9 +12,19 @@ Keep the phone and Portal on the same trusted Wi-Fi. Disable phone VPN routing o
 
 Use the ICS/webcal subscription URL, not an HTML calendar view. Check provider publishing permission, link revocation and the selected detail level. Work/school policies may disallow publishing. Allow time for refresh; check source event timezone if events are offset. Do not post your feed URL in a public issue.
 
+## Photos always start over
+
+Use **Frame Resume**, package `com.portalhacks.frame.resume`, and enable **Playback → Resume where I left off**. Original Frame is a separate app and retains its original behavior. Confirm the screensaver component is `com.portalhacks.frame.resume/com.portalhacks.frame.FrameDreamService`, and keep only that app's guard enabled. See [setup and switching](FRAME-RESUME.md).
+
+If the saved photo was removed, the next surviving photo is selected. Clearing app data removes the bookmark; routine updates should use `adb install -r`. If the room is dark and only a clock appears, check the separate low-light clock setting.
+
+## Original Frame uploads are missing in Frame Resume
+
+Each app has separate private storage. Re-add your shared-album links and upload direct photos through Frame Resume's own QR code. The new app cannot read original Frame's private uploads; original Frame still retains them.
+
 ## Frame shows a video thumbnail but will not play it
 
-Frame 1.2.0 does not implement video playback. Google Photos videos are skipped or appear as still thumbnails. This dashboard does not patch Frame. Other slideshow apps may support videos, but compatibility and Google sign-in must be tested separately on the Portal.
+Frame 1.2.0 does not implement video playback. Google Photos videos are skipped or appear as still thumbnails. The Frame Resume companion adds photo-position memory, not video support. Other slideshow apps may support videos, but compatibility and Google sign-in must be tested separately on the Portal.
 
 ## Radio says it cannot connect / there are no stations
 

@@ -69,6 +69,10 @@ adb -s YOUR_SERIAL forward --remove tcp:8090
 
 Phone QR setup is a separate, limited interface on port 8091. Do not change the management server to listen on all interfaces or expose it through a router/tunnel.
 
+## 6. Add Frame Resume (new in v3.14.0)
+
+Follow [the Frame Resume guide](FRAME-RESUME.md) for the separate signed photo app, album links, QR uploads and idle handoff. The dashboard installer is unchanged in v3.14.0; existing users can add Frame Resume without reinstalling Home Hub.
+
 ## Return to Meta Home
 
 On the tested stock firmware:

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Keep Frame set as the screensaver even when the Portal launcher reclaims the
+         dream slot (e.g. on rotation). Granted once over ADB:
+         adb shell pm grant com.portalhacks.frame android.permission.WRITE_SECURE_SETTINGS -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:label="Frame Resume"
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:allowBackup="false">
+
+        <!-- The real screensaver path: a standard Android DreamService that
+             Portal's Daydream framework can be pointed at. -->
+        <service
+            android:name=".FrameDreamService"
+            android:exported="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <!-- The "Photos" app icon: the Compose settings/setup screen (Milestone 3). -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:label="Frame Resume"
+            android:icon="@mipmap/ic_launcher"
+            android:theme="@style/Theme.FrameSetup"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Full-screen grid manager for phone-pushed photos (opened from Settings). -->
+        <activity
+            android:name=".UploadsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FrameSetup"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
+        <!-- Camera QR scanner + manual entry (still view-based; SettingsActivity
+             hands off here with a "goto" extra). Ported to Compose in a later step. -->
+        <activity
+            android:name=".PhotosActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
+        <!-- The live slideshow screensaver (Compose-hosted, full feature parity).
+             FrameDreamService launches this; also reached via long-press from itself.
+             Theme.Frame + excludeFromRecents prevent the stale-snapshot flash on
+             re-entry; configChanges lets it follow the device's natural orientation. -->
+        <activity
+            android:name=".SlideshowComposeActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Frame"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
+        <!-- Set the Google Photos shared-album URL over ADB (see ConfigReceiver). -->
+        <receiver
+            android:name=".ConfigReceiver"
+            android:exported="true" />
+
+        <!-- Re-asserts Frame as the screensaver when the launcher reclaims the dream
+             slot. Needs WRITE_SECURE_SETTINGS (granted over ADB); see ScreensaverGuard. -->
+        <service
+            android:name=".ScreensaverGuardService"
+            android:exported="false" />
+
+        <!-- Always-on LAN photo-drop server ("AirDrop for Portal"): phones push photos
+             to the frame over Wi-Fi. Foreground so it stays reachable; not exported. -->
+        <service
+            android:name=".DropServerService"
+            android:exported="false" />
+
+        <!-- Restarts the guard after a reboot if the user opted in. -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>

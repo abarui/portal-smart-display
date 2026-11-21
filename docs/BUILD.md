@@ -44,9 +44,13 @@ The script aligns and signs the unsigned build into `dist/Portal-Family-Home.apk
 
 The project's published installer, when present, has its own retained private signing identity. Its key is not in the repository, CI or release downloads. A self-signed build and the project's binary cannot update each other unless they share the same key; Android checks that by design.
 
+## Frame Resume build
+
+Frame Resume lives in `apps/frame-resume` and uses its own Gradle 9.2.1 wrapper and Android Gradle Plugin 8.13.2. Run its wrapper from that directory. See [Frame Resume build/signing](../apps/frame-resume/RELEASING.md) for all checks and stable signing. The root signing helper above is for the Home Hub APK only.
+
 ## Maintain a release
 
-1. Increment `versionCode` and set `versionName` in `app/build.gradle.kts`.
+1. Increment `versionCode` and set `versionName` in each changed app's `app/build.gradle.kts`. Keep unchanged component versions stable and distinguish them from the project release/tag in the release notes.
 2. Run the tests, release build and lint; record which device features were exercised.
 3. Review all staged content for private calendar URLs, tokens, credentials, photos, device IDs and local paths. Never package a user's backup directory.
 4. Sign locally, verify the certificate and APK checksum, then attach only the intended APK and checksum to the corresponding GitHub release.

@@ -8,7 +8,7 @@ The public repository contains source and generic instructions, **not anyone's d
 - Existing family-data JSON files such as members, lists, chores, routines, recipes and meal plans.
 - No photos or camera-gallery files.
 
-It does **not** include Frame's private configuration/uploads, Transistor's station collection, radio favorites/volume, the separate shopping-link token, third-party sign-ins, Android settings, signing keys, or a firmware image. Short-lived cached access tokens are also skipped. A restore after a reset may require new phone QR links and account sign-ins.
+It does **not** include Frame or Frame Resume's private configuration/uploads/bookmarks, Transistor's station collection, radio favorites/volume, the separate shopping-link token, third-party sign-ins, Android settings, signing keys, or a firmware image. Short-lived cached access tokens are also skipped. A restore after a reset may require new phone QR links and account sign-ins.
 
 ## Export over USB
 
@@ -39,6 +39,10 @@ python3 scripts/config-backup.py restore --serial YOUR_SERIAL --file private/por
 The helper first exports the current configuration into a new sibling safety-backup file. If that fails, it stops. It then imports the requested bundle and compares the saved settings and family files to a fresh export. The import replaces main preferences and the data files contained in the bundle. It does not delete unrelated files, install APKs or change firmware.
 
 Afterwards verify calendar refresh, family data, theme/orientation, phone links, Radio, Frame and Home selection. A revoked calendar link cannot be repaired by restoring an old copy of that link. New firmware that removes ADB or sideloading may prevent restoration entirely. This is app configuration recovery, not a guaranteed device recovery mechanism.
+
+## Frame Resume
+
+Keep shared-album links and slideshow settings in a separate private file if needed; [the Frame Resume guide](FRAME-RESUME.md) includes a placeholder configuration and restore helper. The dashboard export does not capture those settings, uploads or the current resume queue. A normal APK update preserves app data; a fresh installation starts a new rotation. Public release downloads contain only generic source/installers and no personal recovery files.
 
 ## Sharing source changes
 

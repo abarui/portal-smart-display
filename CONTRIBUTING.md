@@ -8,6 +8,13 @@ Use JDK 17 and the checked-in Gradle wrapper. Before submitting code:
 ./gradlew testDebugUnitTest assembleRelease lintRelease --no-daemon
 ```
 
+Frame Resume is a separate Gradle build. For changes under `apps/frame-resume`, also run:
+
+```bash
+cd apps/frame-resume
+./gradlew testDebugUnitTest assembleRelease lintDebug detekt ktlintCheck --no-daemon
+```
+
 Add tests for meaningful parsing, authorization, data-loss and lifecycle changes. Test UI changes on an actual device in portrait and landscape when possible; state when only compilation/JVM tests were available. Do not claim playback from an app merely opening or signing in.
 
 Use fictional calendar/member data and placeholder URLs. Keep screenshots free of personal events and photos. Never submit APK signing keys, password files, app exports, device backups or third-party account sessions. See [SECURITY.md](SECURITY.md).

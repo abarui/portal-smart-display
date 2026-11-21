@@ -1,0 +1,22 @@
+Frame (PortalFrame)
+Copyright (c) 2026 Ishtiaq Hossain
+
+This product includes third-party software:
+
+ZXing ("Zebra Crossing") — core module
+  Vendored at: app/libs/zxing-core-3.5.3.jar
+  Homepage:    https://github.com/zxing/zxing
+  License:     Apache License, Version 2.0
+               https://www.apache.org/licenses/LICENSE-2.0
+
+AndroidX / Jetpack Compose, the Kotlin standard library, and the Android SDK
+(resolved via Gradle) are likewise licensed under the Apache License, Version 2.0.
+
+Bundled sample photos (app/assets/slides/) — shown when no album is configured.
+Photos from Unsplash, used under the Unsplash License (https://unsplash.com/license):
+
+  01_canyon.jpg     Philippe Wuyts     https://unsplash.com/photos/_h7aBovKia4
+  02_hills.jpg      Andrew Ridley      https://unsplash.com/photos/Kt5hRENuotI
+  03_forest.jpg     Jordan McQueen     https://unsplash.com/photos/93g2k8D1Mi8
+  04_waterfall.jpg  Andrew Coelho      https://unsplash.com/photos/VB-w_3dnyvI
+  05_valley.jpg     Christian Joudrey  https://unsplash.com/photos/mWRR1xj95hg
